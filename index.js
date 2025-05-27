@@ -61,7 +61,7 @@ app.post('/webhook', async (req, res) => {
       },
       {
         headers: {
-          'Client-Token': process.env.ZAPI_TOKEN
+          'Client-Token': process.env.ZAPI_CLIENT_TOKEN
         }
       }
     );
