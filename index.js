@@ -53,10 +53,18 @@ app.post('/webhook', async (req, res) => {
     const zapiUrl = `https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-messages`;
 
     console.log(`📤 Enviando resposta para o WhatsApp via Z-API (${zapiUrl})...`);
-    await axios.post(zapiUrl, {
-      phone: phone,
-      message: resposta
-    });
+    await axios.post(
+      zapiUrl,
+      {
+        phone: phone,
+        message: resposta
+      },
+      {
+        headers: {
+          'Client-Token': process.env.ZAPI_TOKEN
+        }
+      }
+    );
 
     console.log('✅ Mensagem enviada com sucesso!');
     res.status(200).json({ status: 'ok', resposta });
