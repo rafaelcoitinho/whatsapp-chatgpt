@@ -1,64 +1,44 @@
 const express = require('express');
-const axios = require('axios');
-require('dotenv').config();
-
+const bodyParser = require('body-parser');
 const app = express();
-app.use(express.json());
 
-app.post('/webhook', async (req, res) => {
-  const { message, phone } = req.body;
+const PORT = process.env.PORT || 3000;
 
-  if (!message || !phone) {
-    return res.status(400).json({ error: 'message e phone são obrigatórios.' });
-  }
+app.use(bodyParser.json());
+
+// Rota de teste para ver se o servidor está online
+app.get('/', (req, res) => {
+  console.log('🔵 GET / - Servidor online');
+  res.send('Servidor online');
+});
+
+// Rota do Webhook
+app.post('/webhook', (req, res) => {
+  console.log('🟡 POST /webhook - Requisição recebida');
 
   try {
-    // Chamada para o ChatGPT
-    const respostaGPT = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-3.5-turbo',
-        messages: [
-          {
-            role: 'system',
-            content: 'Você é um assistente de atendimento de uma imobiliária. Seja claro e objetivo.'
-          },
-          {
-            role: 'user',
-            content: message
-          }
-        ]
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
+    const { event, message, phone } = req.body;
 
-    const resposta = respostaGPT.data.choices[0].message.content;
+    console.log('📨 Dados recebidos no corpo da requisição:', req.body);
 
-    // Envia resposta para o WhatsApp via Z-API
-    await axios.post(
-      `https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-messages`,
-      {
-        phone: phone,
-        message: resposta
-      }
-    );
+    if (!event || !message || !phone) {
+      console.log('❌ Dados inválidos: faltando event, message ou phone');
+      return res.status(400).json({ error: 'event, message e phone são obrigatórios.' });
+    }
 
-    res.status(200).json({ status: 'ok', resposta });
+    console.log(`✅ Evento: ${event} | Telefone: ${phone} | Mensagem: ${message}`);
+
+    // Aqui você pode futuramente colocar a lógica de envio de mensagem via API externa
+    // Por enquanto, só retorna um OK para evitar loops ou erro 429
+    res.status(200).json({ success: true, received: { event, message, phone } });
+
   } catch (err) {
-    console.error('Erro:', err.message);
+    console.error('🔥 Erro interno no /webhook:', err);
     res.status(500).json({ error: 'Erro ao processar mensagem' });
   }
 });
 
-// Rota de teste
-app.get('/', (req, res) => {
-  res.send('Bot funcionando!');
+// Inicia o servidor
+app.listen(PORT, () => {
+  console.log(`🚀 Servidor iniciado na porta ${PORT}`);
 });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Rodando na porta ${PORT}`));
