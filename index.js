@@ -9,8 +9,13 @@ app.use(express.json());
 app.post('/webhook', async (req, res) => {
   console.log('🟡 POST /webhook - Requisição recebida');
 
-  const { message, phone } = req.body;
   console.log('📨 Dados recebidos:', req.body);
+
+  const phone  = req.body.phone;
+  const message = req.body.text.message;
+
+  console.log('📨 phone: ', phone);
+  console.log('📨 message: ', message);
 
   if (!message || !phone) {
     console.warn('⚠️ Campos obrigatórios ausentes');
